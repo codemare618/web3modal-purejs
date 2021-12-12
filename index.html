@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Token Test</title>
+    <!-- Order of importing files is pretty important -->
+    <script type="text/javascript" src="https://unpkg.com/web3@1.2.11/dist/web3.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/web3modal@1.9.0/dist/index.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@walletconnect/web3-provider@1.2.1/dist/umd/index.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="./lib.js"></script>
+    <script src="./cuffie.js"></script>
+</head>
+<script>
+  function setButtonEnabled(btnId, enabled) {
+    const btnInstance = document.querySelector(btnId);
+    if (!btnInstance){
+      return;
+    }
+    if (enabled) {
+      btnInstance.removeAttribute('disabled');
+    } else {
+      btnInstance.setAttribute('disabled', 'disabled');
+    }
+  }
+
+  async function refreshStatus(){
+    const isConnected = walletLib.isConnected();
+    setButtonEnabled('#btn_connect', !isConnected);
+    setButtonEnabled('#btn_disconnect', isConnected);
+  }
+
+  function onBodyLoad(){
+    walletLib.addChangeListener(refreshStatus);
+    refreshStatus();
+  }
+
+  async function onBuyCuffies(){
+      console.log(cuffies);
+      const busd = document.querySelector('#txt_busd_amount').value;
+      try {
+          const busd_float = parseFloat(busd);
+
+
+          await cuffies.buyMyCuffies(busd_float, {
+              gaslimit: 50000,
+              txHash: (hash) => {
+                  console.log(hash);
+              },
+              receipt: (receipt) => {
+                  console.log(receipt);
+              },
+              error: (error) => {
+                  console.log(error);
+              }
+          });
+
+          /*
+              .on('transactionHash', function(tx) {
+                  alert(tx);
+              }).on('error', function(err){
+              alert('Error : ' + err.message);
+          }).on('receipt', function(receipt){
+              console.log(receipt);
+          }).on('confirmation', function(confirmation){
+              console.log(confirmation);
+          });*/
+      }catch(err){
+          alert('Error : ' + err.message);
+      }
+  }
+
+  async function onApproveBUSD(){
+      console.log(cuffies);
+      const busd = document.querySelector('#txt_busd_amount').value;
+      try {
+          const busd_float = parseFloat(busd);
+          (await cuffies.approveBusd(busd_float))
+              .on('transactionHash', function(tx) {
+                  alert(tx);
+              }).on('error', function(err){
+              alert('Error : ' + err.message);
+          }).on('receipt', function(receipt){
+              console.log(receipt);
+          }).on('confirmation', function(confirmation){
+              console.log(confirmation);
+          });
+      }catch(err){
+          alert('Error : ' + err.message);
+      }
+  }
+
+</script>
+<body onload="onBodyLoad();">
+<p>
+    <button onclick="walletLib.connectToWallet();" id="btn_connect">Connect</button>
+</p>
+<p >
+    <button onclick="walletLib.disconnectWallet();" id="btn_disconnect">Disconnect</button>
+</p>
+<p>
+    <label for="txt_busd_amount">Enter BUSD</label>
+    <input type="text" id="txt_busd_amount"/>
+    <input type="button" onclick="onBuyCuffies();" value="buy"/>
+    <input type="button" onclick="onApproveBUSD();" value="approve"/>
+</p>
+</body>
+</html>
